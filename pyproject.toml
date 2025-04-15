@@ -6,6 +6,8 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "gradio>=5.23.3",
+    "httpx>=0.28.1",
+    "mcp[cli]>=1.6.0",
     "ollama>=0.4.7",
     "praisonaiagents[llm]>=0.0.72",
 ]
