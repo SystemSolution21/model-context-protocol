@@ -1,0 +1,11 @@
+[project]
+name = "model-context-protocol"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "gradio>=5.23.3",
+    "ollama>=0.4.7",
+    "praisonaiagents[llm]>=0.0.72",
+]
