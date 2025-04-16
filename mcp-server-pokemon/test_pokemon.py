@@ -14,7 +14,7 @@ from pathlib import Path
 # Get the current file path
 current_dir: Path = Path(__file__).parent
 print(f"Current directory: {current_dir}")
-file_path: Path = current_dir / "example-pokemon-api-response.json"
+file_path: Path = current_dir / "dummy-pokemon-api-response.json"
 
 # Do mock response file exists
 if not file_path.exists():
@@ -41,14 +41,14 @@ async def test_fetch_pokemon_data_success(monkeypatch: pytest.MonkeyPatch) -> No
 
     monkeypatch.setattr(target=AsyncClient, name="get", value=mock_get)
 
-    result = await fetch_pokemon_data("bulbasaur")
+    result = await fetch_pokemon_data(pokemon_name="bulbasaur")
     assert (
         result == MOCK_POKEMON_DATA
     )  # The response should match our mock data exactly
 
 
 @pytest.mark.asyncio
-async def test_get_pokemon_info_success(monkeypatch):
+async def test_get_pokemon_info_success(monkeypatch: pytest.MonkeyPatch) -> None:
     mock_data = {
         **MOCK_POKEMON_DATA,
         "id": 1,
@@ -63,7 +63,7 @@ async def test_get_pokemon_info_success(monkeypatch):
     async def mock_fetch(*args, **kwargs):
         return mock_data
 
-    monkeypatch.setattr("pokemon.fetch_pokemon_data", mock_fetch)
+    monkeypatch.setattr(target="pokemon.fetch_pokemon_data", name=mock_fetch)
 
     result = await get_pokemon_info("bulbasaur")
     assert "Name: Bulbasaur" in result
@@ -72,12 +72,12 @@ async def test_get_pokemon_info_success(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_create_tournament_squad(monkeypatch):
+async def test_create_tournament_squad(monkeypatch: pytest.MonkeyPatch) -> None:
     async def mock_fetch(*args, **kwargs):
         pokemon_name = kwargs.get("pokemon_name")
         return {"name": pokemon_name}  # Use kwargs instead of args
 
-    monkeypatch.setattr("pokemon.fetch_pokemon_data", mock_fetch)
+    monkeypatch.setattr(target="pokemon.fetch_pokemon_data", name=mock_fetch)
 
     result = await create_tournament_squad()
     assert "Charizard" in result
@@ -86,7 +86,7 @@ async def test_create_tournament_squad(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_list_popular_pokemon():
+async def test_list_popular_pokemon() -> None:
     result = await list_popular_pokemon()
     assert "charizard" in result.lower()
     assert "garchomp" in result.lower()
@@ -94,12 +94,12 @@ async def test_list_popular_pokemon():
 
 
 @pytest.mark.asyncio
-async def test_fetch_pokemon_data_error(monkeypatch):
+async def test_fetch_pokemon_data_error(monkeypatch: pytest.MonkeyPatch) -> None:
     async def mock_get(*args, **kwargs):
         raise Exception("API Error")
 
-    monkeypatch.setattr(AsyncClient, "get", mock_get)
+    monkeypatch.setattr(target=AsyncClient, name="get", value=mock_get)
 
-    result = await fetch_pokemon_data("bulbasaur")
+    result = await fetch_pokemon_data(pokemon_name="bulbasaur")
     assert "error" in result
     assert "Exception Error" in result["error"]
