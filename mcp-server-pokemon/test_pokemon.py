@@ -13,7 +13,6 @@ from pathlib import Path
 
 # Get the current file path
 current_dir: Path = Path(__file__).parent
-print(f"Current directory: {current_dir}")
 file_path: Path = current_dir / "dummy-pokemon-api-response.json"
 
 # Do mock response file exists
