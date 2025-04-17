@@ -28,8 +28,9 @@ Requirements:
 - mcp[cli]
 
 Run:
-mcp dev pokemon.py # Executes the server on Localhost:6274 MCP Inspector v0.9.0
-mcp install pokemon.py # Executes the server locally on Claude Desktop
+
+- mcp dev pokemon.py # Executes the server on Localhost:6274 MCP Inspector v0.9.0
+- mcp install pokemon.py # Executes the server locally on Claude Desktop
 
 # mcp-server-notes
 
@@ -49,5 +50,6 @@ Requirements:
 - mcp[cli]
 
 Run:
-mcp dev notes.py # Executes the server on Localhost:6274 MCP Inspector v0.9.0
-mcp install notes.py # Executes the server locally on Claude Desktop
+
+- mcp dev notes.py # Executes the server on Localhost:6274 MCP Inspector v0.9.0
+- mcp install notes.py # Executes the server locally on Claude Desktop
