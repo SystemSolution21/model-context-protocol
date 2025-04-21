@@ -5,11 +5,16 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "beautifulsoup4>=4.13.4",
     "gradio>=5.23.3",
+    "html2text>=2025.4.15",
     "httpx>=0.28.1",
     "mcp[cli]>=1.6.0",
+    "multidict!=6.3.1",
     "ollama>=0.4.7",
     "praisonaiagents[llm]>=0.0.72",
+    "requests>=2.32.3",
+    "streamlit>=1.44.1",
 ]
 
 [project.optional-dependencies]
