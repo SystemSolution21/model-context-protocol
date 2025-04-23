@@ -21,9 +21,9 @@ from ollama import chat, ChatResponse
 mcp = FastMCP(name="wiki-summary")
 
 
-# Tool: Get summary from wikipedia
+# Tool: Summarize wikipedia article
 @mcp.tool()
-async def summarize_wikipedia_article(url: str):
+async def summarize_wikipedia_article(url: str) -> str:
     """
     Fetch a Wikipedia article at the provided URL, parse its main content,
     convert it to Markdown, and generate a summary using the llm.
@@ -33,14 +33,14 @@ async def summarize_wikipedia_article(url: str):
     """
 
     try:
-        # validate url
+        # URL validation
         if not url.startswith(("http", "https")):
             raise ValueError("Invalid URL: Must start with 'http://' or 'https://'")
 
-        # Fetch the HTML content of the Wikipedia article
+        # Fetch HTML content of article
         response: Response = requests.get(url)
 
-        # Check response status
+        # Response status
         if response.status_code != 200:
             raise McpError(
                 error=ErrorData(
@@ -52,7 +52,7 @@ async def summarize_wikipedia_article(url: str):
         # Parse the HTML content of article
         soup = BeautifulSoup(markup=response.text, features="html.parser")
 
-        # Find the main content of the article
+        # Find the main window content text
         content_div = soup.find(name="div", attrs={"id": "mw-content-text"})
         if not content_div:
             raise McpError(
@@ -98,10 +98,10 @@ async def summarize_wikipedia_article(url: str):
 
 
 # Set up SSE transport for mcp server
-sse = SseServerTransport("/messages/")
+sse = SseServerTransport(endpoint="/messages/")
 
 
-async def sse_handler(request: Request):
+async def sse_handler(request: Request) -> None:
     """Handle SSE connection."""
     _server = mcp._mcp_server
     async with sse.connect_sse(
