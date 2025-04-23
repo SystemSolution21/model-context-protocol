@@ -54,7 +54,7 @@ async def main(server_url: str, article_url: str) -> None:
                 )
 
                 print("\n=== Summarized Wikipedia Article ===\n")
-                print(response)
+                print(response.content[0])
 
     except Exception as e:
         print(f"Error connecting to MCP server: {e}")
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     if len(sys.argv) < 3:
         print(
             "Usage: uv run -- client.py <server_url> <wikipedia_article_url>\n"
-            "Example: uv run -- client.py http://localhost:8000/sse https://en.wikipedia.org/wiki/Python_(programming_language)\n"
+            "Example: uv run -- client.py http://localhost:8000/sse https://en.wikipedia.org/wiki/Model_Context_Protocol\n"
         )
         sys.exit(1)
 

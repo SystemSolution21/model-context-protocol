@@ -25,11 +25,11 @@ mcp = FastMCP(name="wiki-summary")
 @mcp.tool()
 async def summarize_wikipedia_article(url: str) -> str:
     """
-    Fetch a Wikipedia article at the provided URL, parse its main content,
+    Fetch a Wikipedia article at the provided URL, parse it's main content,
     convert it to Markdown, and generate a summary using the llm.
 
     Usage:
-        summarize_wikipedia_article("https://en.wikipedia.org/wiki/Python_(programming_language)")
+        summarize_wikipedia_article("https://en.wikipedia.org/wiki/Model_Context_Protocol")
     """
 
     try:
@@ -68,7 +68,7 @@ async def summarize_wikipedia_article(url: str) -> str:
         # Generate a summary using llm
         prompt: str = f"Summarize the following text:\n\n{markdown_text}\n\nSummary:"
         llm: ChatResponse = chat(
-            model="gemma3.2:3b", messages=[{"role": "user", "content": prompt}]
+            model="gemma3:4b", messages=[{"role": "user", "content": prompt}]
         )
         summary: str = llm["message"]["content"].strip()
 
