@@ -102,3 +102,11 @@ def fetch_youtube_transcript(
 # Entry point for the FastMCP server
 if __name__ == "__main__":
     mcp.run(transport="stdio")
+
+    # print(
+    #     fetch_youtube_transcript(
+    #         video_id="mWaMSGwiSB0",
+    #         lang_code="en",
+    #         format="text",
+    #     )
+    # )
