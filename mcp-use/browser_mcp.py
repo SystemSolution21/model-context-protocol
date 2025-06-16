@@ -22,7 +22,7 @@ mcp_agent: MCPAgent = MCPAgent(llm=llm, client=mcp_client, max_steps=30)
 
 
 # Define the query
-query = "Find the best restaurant in San Francisco USING GOOGLE SEARCH"
+query = "Find the best restaurant in Tokyo USING GOOGLE SEARCH"
 
 
 # Run the query
