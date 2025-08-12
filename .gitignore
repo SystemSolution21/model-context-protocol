@@ -9,8 +9,8 @@ wheels/
 # Virtual environments
 .venv
 
-# uv lock file
-uv.lock
+# Environment variables
+.env
 
 # Pytest cache
 .pytest_cache

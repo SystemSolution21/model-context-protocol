@@ -1,23 +1,35 @@
 # server.py
+import os
+import sys
+
 import requests
+import uvicorn
+from bs4 import BeautifulSoup
+from dotenv import load_dotenv
+from html2text import html2text
+from mcp.server.fastmcp import FastMCP
+from mcp.server.sse import SseServerTransport
+from mcp.shared.exceptions import McpError
+from mcp.types import INTERNAL_ERROR, INVALID_PARAMS, ErrorData
+from ollama import ChatResponse, chat
 from requests import Response
 from requests.exceptions import RequestException
-from bs4 import BeautifulSoup
-from html2text import html2text
-
-import uvicorn
 from starlette.applications import Starlette
 from starlette.requests import Request
-from starlette.routing import Route, Mount
+from starlette.routing import Mount, Route
 
-from mcp.server.fastmcp import FastMCP
-from mcp.shared.exceptions import McpError
-from mcp.types import ErrorData, INTERNAL_ERROR, INVALID_PARAMS
-from mcp.server.sse import SseServerTransport
+# Load environment variables
+load_dotenv()
 
-from ollama import chat, ChatResponse
+if os.getenv("MODEL_NAME") is None:
+    raise ValueError("MODEL_NAME is not set")
+    sys.exit(1)
 
-# Create mcp server instance
+# Get model name from environment variables
+MODEL_NAME: str = os.getenv(key="MODEL_NAME", default="gpt-4.1-nano")
+
+
+# MCP server instance
 mcp = FastMCP(name="wiki-summary")
 
 
@@ -37,7 +49,7 @@ async def summarize_wikipedia_article(url: str) -> str:
         if not url.startswith(("http", "https")):
             raise ValueError("Invalid URL: Must start with 'http://' or 'https://'")
 
-        # Fetch HTML content of article
+        # Fetch HTML article content
         response: Response = requests.get(url)
 
         # Response status
@@ -49,10 +61,10 @@ async def summarize_wikipedia_article(url: str) -> str:
                 )
             )
 
-        # Parse the HTML content of article
+        # Parse HTML article content
         soup = BeautifulSoup(markup=response.text, features="html.parser")
 
-        # Find the main window content text
+        # Main window content text
         content_div = soup.find(name="div", attrs={"id": "mw-content-text"})
         if not content_div:
             raise McpError(
@@ -62,13 +74,13 @@ async def summarize_wikipedia_article(url: str) -> str:
                 )
             )
 
-        # Convert the HTML content to Markdown
+        # Convert HTML content to Markdown
         markdown_text: str = html2text(html=str(object=content_div))
 
-        # Generate a summary using llm
+        # Summarize the article using llm
         prompt: str = f"Summarize the following text:\n\n{markdown_text}\n\nSummary:"
         llm: ChatResponse = chat(
-            model="gemma3:4b", messages=[{"role": "user", "content": prompt}]
+            model=MODEL_NAME, messages=[{"role": "user", "content": prompt}]
         )
         summary: str = llm["message"]["content"].strip()
 
