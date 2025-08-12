@@ -1,6 +1,7 @@
+# calculator.py
+
 """Calculator MCP server."""
 
-# calculator.py
 from mcp.server import FastMCP
 
 mcp = FastMCP(name="calculator")
