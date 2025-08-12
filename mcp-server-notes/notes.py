@@ -1,10 +1,12 @@
 # notes.py
 """
 This module provides a simple note-taking application using the FastMCP framework.
-It includes tools for reading and adding notes, a resource for retrieving the latest note,
-and a prompt for summarizing all notes.
+It includes tools for creating, reading, editing, deleting, and listing notes.
+Each note is stored as a separate file in the 'notes_data' directory.
 """
 
+import re
+import unicodedata
 from pathlib import Path
 
 from mcp.server import FastMCP
@@ -14,204 +16,179 @@ mcp = FastMCP(name="notes")
 
 # Current file path
 current_dir: Path = Path(__file__).parent
-note_file: Path = current_dir / "notes.txt"
+notes_dir: Path = current_dir / "notes_data"
 
 
-# Tool: Read notes
-@mcp.tool()
-async def read_notes() -> str:
+# --- Helper Functions ---
+
+
+def _sanitize_title_to_filename(title: str) -> str:
     """
-    Read all notes from the notes.txt file.
+    Sanitizes a string to be used as a valid filename.
+    """
+    s: str = (
+        unicodedata.normalize("NFKD", title)
+        .encode(encoding="ascii", errors="ignore")
+        .decode(encoding="ascii")
+    )
+    s: str = re.sub(pattern=r"[^\w\s-]", repl="", string=s).strip().lower()
+    s: str = re.sub(pattern=r"[-\s]+", repl="-", string=s)
+    return s + ".txt"
+
+
+def _get_note_path(title: str) -> Path:
+    """
+    Gets the full path for a note from its title.
+    Ensures the notes directory exists.
+    """
+    notes_dir.mkdir(exist_ok=True)
+    filename = _sanitize_title_to_filename(title)
+    return notes_dir / filename
+
+
+# --- Tools ---
+
+
+@mcp.tool()
+async def list_notes() -> str:
+    """
+    Lists all available notes by their title.
 
     Returns:
-        str: The content of the notes file if it exists and has content,
-             otherwise returns a default message.
+        str: A list of available note titles, or a message if none exist.
     """
-    try:
-        with open(file=note_file, mode="r") as f:
-            content: str = f.read().strip()
-        return content or "No notes yet!."
-    except FileNotFoundError:
-        return "No notes yet!."
+    notes_dir.mkdir(exist_ok=True)
+    note_files: list[Path] = sorted(notes_dir.glob(pattern="*.txt"))
+    if not note_files:
+        return "No notes found. You can create one with 'add_note'."
+    titles: list[str] = [f.stem.replace("-", " ").title() for f in note_files]
+    return "Available notes:\n- " + "\n- ".join(titles)
 
 
-# Tool: Add notes
 @mcp.tool()
-async def add_notes(notes: str) -> str:
+async def add_note(title: str, content: str) -> str:
     """
-    Append new notes to the notes.txt file, with automatic numbering.
+    Creates a new note with a given title and content.
 
     Args:
-        notes (str): The text content to add as a new note.
-
-    Returns:
-        str: A success message confirming the note was added, including its number.
-    """
-    if not notes.strip():
-        return "Cannot add an empty note."
-
-    last_number = 0
-    try:
-        with open(file=note_file, mode="r") as f:
-            lines: list[str] = f.readlines()
-        # Last numbered line to determine the next number
-        for line in reversed(lines):
-            line: str = line.strip()
-            if line and "." in line:
-                parts: list[str] = line.split(sep=".", maxsplit=1)
-                if parts[0].isdigit():
-                    last_number = int(parts[0])
-                    break
-    except FileNotFoundError:
-        # File doesn't exist, start numbering from 1.
-        pass
-
-    next_number: int = last_number + 1
-    with open(file=note_file, mode="a") as f:
-        f.write(f"{next_number}. {notes}\n")
-    return f"Note #{next_number} added successfully!"
-
-
-# Tool: Delete a note
-@mcp.tool()
-async def delete_note(note_number: str) -> str:
-    """
-    Deletes a note by its number and re-numbers the remaining notes.
-
-    Args:
-        note_number (str): The number of the note to delete.
+        title (str): The title for the new note.
+        content (str): The text content of the new note.
 
     Returns:
         str: A success or failure message.
     """
-    if not note_number.strip().isdigit():
-        return "Please provide a valid note number to delete."
-
-    note_num = int(note_number)
-
-    try:
-        with open(file=note_file, mode="r") as f:
-            lines: list[str] = f.readlines()
-    except FileNotFoundError:
-        return "No notes file found. Nothing to delete."
-
-    if not lines:
-        return "Notes file is empty. Nothing to delete."
-
-    note_found = False
-    updated_notes_content: list[str] = []
-    for line in lines:
-        stripped_line: str = line.strip()
-        if not stripped_line:
-            continue
-
-        parts: list[str] = stripped_line.split(sep=".", maxsplit=1)
-        if len(parts) == 2 and parts[0].isdigit():
-            if int(parts[0]) == note_num:
-                note_found = True
-            else:
-                updated_notes_content.append(parts[1].strip())
-
-    if not note_found:
-        return f"Note #{note_num} not found."
-
-    with open(file=note_file, mode="w") as f:
-        for i, content in enumerate(iterable=updated_notes_content, start=1):
-            f.write(f"{i}. {content}\n")
-
-    return f"Note #{note_num} deleted and notes re-numbered successfully."
+    if not title.strip() or not content.strip():
+        return "Error: Title and content cannot be empty."
+    note_path: Path = _get_note_path(title=title)
+    if note_path.exists():
+        return f"Error: A note with the title '{title}' already exists."
+    note_path.write_text(content.strip(), encoding="utf-8")
+    return f"Note '{title}' created successfully."
 
 
-# Tool: Edit a note
 @mcp.tool()
-async def edit_note(note_number: str, new_content: str) -> str:
+async def read_note(title: str) -> str:
     """
-    Edits an existing note by its number.
+    Reads the content of a specific note.
 
     Args:
-        note_number (str): The number of the note to edit.
+        title (str): The title of the note to read.
+
+    Returns:
+        str: The content of the note, or an error message if not found.
+    """
+    note_path: Path = _get_note_path(title=title)
+    try:
+        return note_path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return f"Error: Note with title '{title}' not found."
+
+
+@mcp.tool()
+async def delete_note(title: str) -> str:
+    """
+    Deletes a specific note by its title.
+
+    Args:
+        title (str): The title of the note to delete.
+
+    Returns:
+        str: A success or failure message.
+    """
+    note_path: Path = _get_note_path(title=title)
+    try:
+        note_path.unlink()
+        return f"Note '{title}' deleted successfully."
+    except FileNotFoundError:
+        return f"Error: Note with title '{title}' not found."
+
+
+@mcp.tool()
+async def edit_note(title: str, new_content: str) -> str:
+    """
+    Edits an existing note, replacing its content.
+
+    Args:
+        title (str): The title of the note to edit.
         new_content (str): The new text content for the note.
 
     Returns:
         str: A success or failure message.
     """
-    if not note_number.strip().isdigit():
-        return "Please provide a valid note number to edit."
-
-    note_num = int(note_number)
-
     if not new_content.strip():
-        return "Cannot replace a note with empty content."
-
-    try:
-        with open(file=note_file, mode="r") as f:
-            lines: list[str] = f.readlines()
-    except FileNotFoundError:
-        return "No notes file found. Nothing to edit."
-
-    if not lines:
-        return "Notes file is empty. Nothing to edit."
-
-    note_found = False
-    updated_lines: list[str] = []
-    for line in lines:
-        stripped_line: str = line.strip()
-        parts: list[str] = stripped_line.split(".", 1)
-        if len(parts) == 2 and parts[0].isdigit() and int(parts[0]) == note_num:
-            updated_lines.append(f"{note_num}. {new_content.strip()}\n")
-            note_found = True
-        else:
-            updated_lines.append(line)
-
-    if not note_found:
-        return f"Note #{note_num} not found."
-
-    with open(file=note_file, mode="w") as f:
-        f.writelines(updated_lines)
-
-    return f"Note #{note_num} edited successfully."
+        return "Error: Cannot replace a note with empty content."
+    note_path: Path = _get_note_path(title=title)
+    if not note_path.exists():
+        return f"Error: Note with title '{title}' not found."
+    note_path.write_text(data=new_content.strip(), encoding="utf-8")
+    return f"Note '{title}' edited successfully."
 
 
-# Resource: Get latest notes
+# --- Resources & Prompts ---
+
+
 @mcp.resource(uri="notes://latest")
 async def get_latest_notes() -> str:
     """
-    Retrieve the most recent note from the notes.txt file.
+    Retrieve the content of the most recently modified note.
 
     Returns:
-        str: The last line from the notes file if it exists and has content,
+        str: The content of the latest note if it exists,
              otherwise returns a default message.
     """
+    notes_dir.mkdir(exist_ok=True)
     try:
-        with open(file=note_file, mode="r") as f:
-            lines: list[str] = f.readlines()
-        return lines[-1].strip() if lines else "No notes yet!."
-    except FileNotFoundError:
+        latest_file: Path = max(
+            notes_dir.glob(pattern="*.txt"), key=lambda f: f.stat().st_mtime
+        )
+        return latest_file.read_text(encoding="utf-8")
+    except (FileNotFoundError, ValueError):
         return "No notes yet!."
 
 
-# Prompt: Notes summary prompt
 @mcp.prompt()
 async def notes_summary_prompt() -> str:
     """
-    Generate a prompt for summarizing all notes in the notes.txt file.
+    Generate a prompt for summarizing all available notes.
 
-    This function reads the content of the notes file and creates a prompt
-    requesting a summary of the notes. If no notes exist, it returns a
-    default message.
+    This function reads the content of all note files and creates a prompt
+    requesting a summary.
 
     Returns:
         str: A prompt string containing either the notes to be summarized
              or a message indicating no notes exist.
     """
-    try:
-        with open(file=note_file, mode="r") as f:
-            content: str = f.read().strip()
-        if not content:
-            return "No notes yet!."
-        return f"Summarize the following notes: {content}"
-    except FileNotFoundError:
+    notes_dir.mkdir(exist_ok=True)
+    all_content: list[str] = []
+    for note_path in sorted(notes_dir.glob(pattern="*.txt")):
+        title: str = note_path.stem.replace("-", " ").title()
+        content: str = note_path.read_text(encoding="utf-8")
+        all_content.append(f"--- Note: {title} ---\n{content}")
+
+    if not all_content:
         return "No notes yet!."
+
+    return "Summarize the following notes:\n\n" + "\n\n".join(all_content)
 
 
 # Entry point for the FastMCP server
