@@ -1,7 +1,7 @@
 from typing import Any
-from httpx import HTTPStatusError, Response, AsyncClient, RequestError
+
+from httpx import AsyncClient, HTTPStatusError, RequestError, Response
 from mcp.server import FastMCP
-from pydantic import BaseModel
 
 # Initialize the FastMCP server
 mcp = FastMCP(name="pokemon")
@@ -78,9 +78,9 @@ async def get_pokemon_info(pokemon_name: str) -> str:
     ID: {pokemon_id}
     Height: {height} decimeters
     Weight: {weight} hectograms
-    Types: {', '.join(types) if types else 'N/A'}
-    Abilities: {', '.join(abilities) if abilities else 'N/A'}
-    Base Stats: {', '.join(f'{k}: {v}' for k, v in stats.items())}
+    Types: {", ".join(types) if types else "N/A"}
+    Abilities: {", ".join(abilities) if abilities else "N/A"}
+    Base Stats: {", ".join(f"{k}: {v}" for k, v in stats.items())}
     """
 
 

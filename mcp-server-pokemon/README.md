@@ -19,5 +19,5 @@ Requirements:
 
 Run:
 
-- mcp dev pokemon.py # Executes the server on Localhost:6274 MCP Inspector v0.9.0
+- mcp dev pokemon.py # Executes the server on Localhost:6274 MCP Inspector v0.16.3
 - mcp install pokemon.py # Executes the server locally on Claude Desktop
