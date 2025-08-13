@@ -1,9 +1,10 @@
-import streamlit as st
 import asyncio
 import traceback
+from typing import Any
+
+import streamlit as st
 from mcp import ClientSession
 from mcp.client.sse import sse_client
-from typing import Any
 
 
 async def call_tool(server_url: str, article_url: str) -> Any:
@@ -28,7 +29,7 @@ async def call_tool(server_url: str, article_url: str) -> Any:
         return f"Error: {e}\n{traceback.format_exc()}"
 
 
-def main() -> None:
+async def main() -> None:
     st.set_page_config(page_title="Streamlit-MCP-Client")
     st.title(body="Streamlit as a MCP Client")
     st.markdown(
@@ -44,12 +45,10 @@ def main() -> None:
     )
 
     if st.button(label="Fetch and Summarize"):
-
         with st.spinner(text="Fetching and summarizing the article..."):
-
             try:
-                response = asyncio.run(
-                    main=call_tool(server_url=server_url, article_url=article_url)
+                response = await call_tool(
+                    server_url=server_url, article_url=article_url
                 )
                 result: str = response.content[0].text
 
@@ -61,4 +60,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main=main())

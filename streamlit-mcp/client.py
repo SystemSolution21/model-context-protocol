@@ -20,7 +20,7 @@ def print_items(name: str, result: Any) -> None:
         for item in items:
             print(" *", item)
     else:
-        print(f"No items available.")
+        print("No items available.")
 
 
 async def main(server_url: str, article_url: str) -> None:
@@ -46,7 +46,7 @@ async def main(server_url: str, article_url: str) -> None:
                 print_items(name="resources", result=await session.list_resources())
                 print_items(name="prompts", result=await session.list_prompts())
 
-                print(f'\nCalling "summarize_wikipedia_article" tool...')
+                print('\nCalling "summarize_wikipedia_article" tool...')
 
                 response = await session.call_tool(
                     name="summarize_wikipedia_article",
