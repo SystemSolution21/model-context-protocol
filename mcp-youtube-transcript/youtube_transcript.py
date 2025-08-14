@@ -5,7 +5,6 @@ and exposes this functionality as a tool through the Model Context Protocol (MCP
 
 from mcp.server.fastmcp import FastMCP
 from youtube_transcript_api._api import YouTubeTranscriptApi
-
 from youtube_transcript_api._errors import (
     TranscriptsDisabled,
     VideoUnavailable,
@@ -15,14 +14,14 @@ from youtube_transcript_api._transcripts import (
     Transcript,
     TranscriptList,
 )
-from youtube_transcript_api.formatters import TextFormatter, JSONFormatter
+from youtube_transcript_api.formatters import JSONFormatter, TextFormatter
 
 # Initialize the FastMCP server
 mcp = FastMCP(name="youtube-transcripts")
 
 
 # Tool: Get YouTube transcript
-def get_youtube_transcript(
+async def get_youtube_transcript(
     video_id: str, lang_code: str = "en", format: str = "json"
 ) -> str:
     """
@@ -85,7 +84,7 @@ def get_youtube_transcript(
 
 # Tool: Fetch YouTube transcript
 @mcp.tool()
-def fetch_youtube_transcript(
+async def fetch_youtube_transcript(
     video_id: str, lang_code: str = "en", format: str = "json"
 ) -> str:
     """
@@ -96,7 +95,9 @@ def fetch_youtube_transcript(
     :param format: The desired output format of the transcript; either 'text' or 'json'.
     :return: The transcript in the specified format.
     """
-    return get_youtube_transcript(video_id=video_id, lang_code=lang_code, format=format)
+    return await get_youtube_transcript(
+        video_id=video_id, lang_code=lang_code, format=format
+    )
 
 
 # Entry point for the FastMCP server
